@@ -1,0 +1,67 @@
+#Total
+{
+    width: 800px; 
+    height: 450px; 
+    background-color: gray;
+}
+#d_Top
+{
+    width: 800px; 
+    height: 50px; 
+    background-color: blue; 
+    text-align: right;
+}
+#d_Left
+{
+    width: 160px; 
+    height: 400px; 
+    background-color: skyblue; 
+    float: left;
+}
+#d_Right
+{
+    width: 640px; 
+    height: 400px; 
+    background-color: green; 
+    float: right; 
+    position: relative;
+}
+#top_text
+{
+    padding-top: 15px; 
+    padding-right: 15px;
+}
+#student_id, #student_name
+{
+    color: yellow;
+}
+#mainText
+{
+    position: absolute; 
+    top: 45%; 
+    left: 37%; 
+    color: purple; 
+    font-size: 20px;
+}
+#button1, #button2
+{
+    width: 140px; 
+    height: 50px; 
+    margin: 8px; 
+    padding: 8px; 
+    font-size: 20px; 
+    text-align: center;
+}
+#GameIndu
+{
+    position: absolute; 
+    top: 10%; 
+    left: 35%; 
+    color: yellow; 
+    font-size: 20px;
+}
+#img
+{
+    position: absolute; 
+    left: -50%;
+}

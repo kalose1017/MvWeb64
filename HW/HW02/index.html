@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="styles.css">
+        <script>
+            function drawCircle()
+            {
+                var textElement = document.getElementById('mainText'); //글자 없애기
+                textElement.style.display = 'none';
+                var GameText = document.getElementById('GameIndu');
+                GameText.style.display = 'none';
+
+                var canvas = document.getElementById('circle');  // canvas 요소 가져오기
+                canvas.style.display = 'block';
+                var context = canvas.getContext('2d'); 
+
+                var centerX = canvas.width / 2; //원 위치 설정
+                var centerY = canvas.height / 2;
+                var radius = 170; 
+
+                context.clearRect(0, 0, canvas.width, canvas.height); // 캔버스 지우기
+                context.beginPath(); // 새로운 그림 시작
+                context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false); // 원 그리기
+                context.fillStyle = 'skyblue'; // 채우기 색상 설정
+                context.fill(); // 원 채우기
+                context.lineWidth = 5; // 선의 두께 설정
+                context.strokeStyle = 'green'; // 선 색상 설정
+                context.stroke(); // 원 테두리 그리기
+
+                textElement.textContent = "이거슨 원이와요~";
+                textElement.style.display = 'block'; // 글자 출력
+            }
+            function myGame()
+            {
+                var textElement = document.getElementById('mainText'); //글자 없애기
+                textElement.style.display = 'none';
+                var canvas = document.getElementById('circle'); // canvas 요소 가져오기
+                canvas.style.display = 'none';
+                document.getElementById('GameIndu').style.display = 'block';
+
+            }
+        </script>
+    </head>
+    <body>
+    <div id="Total">
+        <div id="d_Top"><div id="top_text"><b id="student_id">학번 : 202127064 </b><b id="student_name">이름 : 이지호</b></div></div>
+        <div id="d_Left">
+            <button type="button" id="button1" onclick="drawCircle()">버튼1</button>
+            <button type="button" id="button2" onclick="myGame()">버튼2</button>
+        </div>
+        <div id="d_Right">
+            <canvas id="circle" width="640" height="400"></canvas>
+            <b id="mainText">이거슨 빈화면이와요~</b>
+            <div id="GameIndu" style="display: none;">
+            <img src="IMG/rdr2.jpg" id="img" alt="레데리2" width="200" height="240">
+                <ul>    
+                    <li>게임명 : 레드 데드 리뎀션 2</li>
+                    <li>출시년도(PS4 기준) : 2018년 10월 25일</li>
+                    <li>장르 : 오픈 월드 액션 어드벤처</li>
+                    <li>이 게임을 좋아하는 이유 :</li>
+                    <ol type="1">
+                        <li>19세기 말 미국 서부를 표현</li>
+                        <li>극사실적인 게임요소들</li>
+                        <li>장대한 스토리</li>
+                        <li>새로운 세상을 살아가는듯한 몰입감</li>
+                        <li>매력적인 OST들</li>
+                    </ol>
+                </ul>
+            </div>
+        </div>
+    </div>
+    </body>
+</html>
