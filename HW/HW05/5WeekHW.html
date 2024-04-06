@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas Rotation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        #body{ background-color: black;}
+        #text{color: yellow;}
+    </style>
+</head>
+<body id="body">
+    <h2 id="text">빙글빙글 돌아가는 우리들의 세상</h2>
+    <hr>
+    <canvas id="canvas" width="900" height="700"></canvas>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+
+        // 중심 좌표
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+
+        // 파란색 사각형의 중심에서 원까지의 거리
+        var blueRectDistance = 300;
+
+        // 빨간색 사각형의 중심에서 원까지의 거리
+        var greyRectDistance = 50;
+
+        // 초기 각도
+        var redRect = 0;
+        var blueRect = 0;
+        var blueRotate = 0;
+        var greyRect = 0;
+        var greyRotate = 0;
+
+        // 파란색 사각형과 빨간색 사각형의 속도
+        var redRotateSpeed = Math.PI / 100;
+        var blueOrbitSpeed = Math.PI / 200;
+        var blueRotateSpeed = Math.PI / 150;
+        var greyOrbitSpeed = Math.PI / 100;
+        var greyRotateSpeed = Math.PI / 80;
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 지구 사각형 중심 좌표 계산
+            var blueRectCenterX = centerX + Math.cos(blueRect) * blueRectDistance;
+            var blueRectCenterY = centerY - Math.sin(blueRect) * blueRectDistance;
+
+            // 달 사각형 중심 좌표 계산
+            var greyRectCenterX = blueRectCenterX + Math.cos(greyRect) * greyRectDistance;
+            var greyRectCenterY = blueRectCenterY + Math.sin(greyRect) * greyRectDistance;
+           
+            // 태양 사각형 그리기 
+            context.save();
+            context.fillStyle = 'red';
+            context.strokeStyle = 'yellow'; 
+            context.lineWidth = 5;
+            context.translate(centerX, centerY);
+            context.rotate(redRect);
+            context.fillRect(-25, -25, 50, 50);
+            context.strokeRect(-25, -25, 50, 50); 
+            context.restore();
+
+            // 지구 사각형 그리기
+            context.save();
+            context.fillStyle = 'blue';
+            context.strokeStyle = 'green';
+            context.lineWidth = 3;
+            context.translate(blueRectCenterX, blueRectCenterY);
+            context.rotate(blueRotate);
+            context.fillRect(-15, -15, 30, 30);
+            context.strokeRect(-15, -15, 30, 30);
+            context.restore();
+            
+            // 달 사각형 그리기
+            context.save();
+            context.fillStyle = 'grey';
+            context.translate(greyRectCenterX, greyRectCenterY);
+            context.rotate(greyRotate);
+            context.fillRect(-5, -5, 10, 10);
+            context.restore();
+
+            redRect += redRotateSpeed;
+            blueRect += blueOrbitSpeed;
+            blueRotate += blueRotateSpeed;
+            greyRect += greyOrbitSpeed;
+            greyRotate += greyRotateSpeed;
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
