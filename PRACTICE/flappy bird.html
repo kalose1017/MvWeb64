@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="700" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Bird properties
+    let birdX = 50;
+    let birdY = canvas.height / 2;
+    let birdWidth = 20;
+    let birdHeight = 20;
+    let gravity = 0.5;
+    let jumpStrength = -5;
+    let jumpSpeed = 0;
+    let jumpInterval = null;
+    let birdAngle = 0; // 새의 각도
+
+    // Score
+    let score = 0;
+
+    // Game state
+    let gameOver = false;
+
+    // Function to draw the bird
+    function drawBird() {
+      ctx.save(); // 현재 캔버스의 상태 저장
+      ctx.translate(birdX + birdWidth / 2, birdY + birdHeight / 2); // 회전 중심점을 새의 중심으로 이동
+      ctx.rotate(birdAngle * Math.PI / 180); // 각도만큼 회전
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(-birdWidth / 2, -birdHeight / 2, birdWidth, birdHeight); // 새를 그릴 때 중심점을 고려하여 그림
+      ctx.restore(); // 캔버스 상태를 이전 상태로 복구
+    }
+
+    // Pipe properties
+    let pipeX = canvas.width;
+    let pipeWidth = 50;
+    let pipeGap = 150;
+    let pipeHeight = Math.random() * (canvas.height - pipeGap);
+    let pipeSpeed = 2;
+
+    // Function to draw a pipe
+    function drawPipe(x, height) {
+      ctx.fillStyle = 'green';
+      ctx.fillRect(x, 0, pipeWidth, height);
+      ctx.fillRect(x, height + pipeGap, pipeWidth, canvas.height - height - pipeGap);
+    }
+
+    // Function to check collision between bird and pipe or ground/ceiling
+    function checkCollision() {
+      if (birdY + birdHeight >= canvas.height || birdY <= 0) {
+        return true; // bird hits ground or ceiling
+      }
+
+      if (birdX + birdWidth >= pipeX && birdX <= pipeX + pipeWidth && (birdY <= pipeHeight || birdY + birdHeight >= pipeHeight + pipeGap)) {
+        return true; // bird hits pipe
+      }
+
+      return false;
+    }
+
+    // Function to handle game over
+    function handleGameOver() {
+      gameOver = true;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'black';
+      ctx.font = '70px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2);
+    }
+
+    // Function to update score
+    function updateScore() {
+      ctx.fillStyle = 'black';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText('SCORE: ' + score, canvas.width - 10, 30);
+    }
+
+    // Main update function
+    function update() {
+      if (gameOver) return;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Check collision
+      if (checkCollision()) {
+        handleGameOver();
+        return;
+      }
+
+      // Update pipe
+      pipeX -= pipeSpeed;
+      if (pipeX + pipeWidth < 0) {
+        pipeX = canvas.width;
+        pipeHeight = Math.random() * (canvas.height - pipeGap);
+        score++; // Increase score when passing through pipe
+      }
+
+      // Draw pipe
+      drawPipe(pipeX, pipeHeight);
+
+      // Apply gravity to bird
+      birdY += gravity;
+
+      // Apply jump speed
+      birdY += jumpSpeed;
+      jumpSpeed += gravity;
+
+      // Adjust bird angle
+      birdAngle = jumpSpeed < 0 ? 30 : -30; // 새의 각도를 조절하여 얼굴을 들거나 내리기
+
+      // Draw bird
+      drawBird();
+
+      // Update score
+      updateScore();
+    }
+
+    // Function to handle user input (jump)
+    function jumpBird() {
+      if (gameOver) return;
+      jumpSpeed = jumpStrength;
+    }
+
+    // Event listener for keyboard input (spacebar)
+    window.addEventListener('keydown', function(event) {
+      if (event.code === 'Space') {
+        jumpBird();
+      }
+    });
+
+    // Main game loop
+    function gameLoop() {
+      update();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start the game loop
+    gameLoop();
+  </script>
+</body>
+</html>
