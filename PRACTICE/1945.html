@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1945-like Game</title>
+    <style>
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+        }
+        #gameCanvas {
+            border: 1px solid black;
+            position: relative;
+            top: 0;
+            left: 0;
+        }
+        #restartButton {
+            display: none;
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            padding: 10px 20px;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <button id="restartButton">다시하기</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 플레이어 전투기 초기 위치
+        let playerX = canvas.width / 2;
+        let playerY = canvas.height - 50;
+
+        // 플레이어 전투기의 이동 속도
+        const playerSpeed = 5;
+
+        // 키 상태를 저장하는 객체
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            ArrowDown: false
+        };
+
+        // 총알의 리스트
+        const bullets = [];
+
+        // 적 객체
+        let enemy = null;
+
+        // 적의 초기 생성 수
+        const initialEnemyCount = 1;
+
+        // 적의 Y 좌표
+        const enemyY = 50;
+
+        // 적이 플레이어의 총알을 맞은 횟수
+        let enemyHitCount = 0;
+
+        // 적이 쏜 총알의 리스트
+        const enemyBullets = [];
+
+        // 적이 총알을 발사하는 간격 (초)
+        const enemyFireInterval = 0.5;
+
+        // 마지막으로 총알이 발사된 시간
+        let lastBulletTime = 0; // 총알의 최소 딜레이를 주기 위해
+
+        let enemySpeed = 2; // 적의 이동 속도
+        let enemyDirection = 1; // 적의 이동 방향 (1: 오른쪽, -1: 왼쪽)
+        let enemySpawnX = 0; // 적의 초기 생성 X 좌표
+        
+        let score = 0; // 점수
+        let playerHP = 10; // 플레이어 생명
+        let gameEnded = false; // 게임 종료 여부
+        
+        // 게임 초기화 함수
+        function init() {
+            createEnemy();
+            setInterval(enemyFire, enemyFireInterval * 1000);
+            setInterval(moveEnemy, 1000 / 60); // 적의 이동 업데이트
+        }
+        //UI 그리기 함수
+        function drawHUD() {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, canvas.width - 120, 30);
+            ctx.fillText(`HP: ${playerHP}`, canvas.width - 120, 60);
+        }
+
+        // 적 생성 함수
+        function createEnemy() {
+            const randomDirection = Math.random() < 0.5 ? -1 : 1; // 랜덤 방향 설정
+            enemySpawnX = Math.random() * (canvas.width - 50);
+            enemy = {
+            x: enemySpawnX,
+            y: enemyY,
+            direction: randomDirection // 랜덤 방향 저장
+            };
+        }
+
+        // 적 이동 함수
+        function moveEnemy() {
+            if (enemy) {
+                enemy.x += enemySpeed * enemy.direction;
+                // 적의 이동 범위 제한
+                if (enemy.x >= enemySpawnX + 200 || enemy.x <= enemySpawnX - 200) {
+                    enemy.direction *= -1; // 방향 전환
+                }
+                if (enemy.x >= canvas.width - 50 || enemy.x <= 0) {
+                    enemy.direction *= -1; // 방향 전환
+                }
+                console.log("enemy.x:", enemy.x);
+                console.log("enemySpawnX:", enemySpawnX);
+            }
+        }
+        // 게임 상태 체크 함수
+        function checkGameCondition() {
+            if (score >= 100 || playerHP <= 0) {
+                gameEnded = true;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'black';
+                ctx.font = '50px Arial';
+                ctx.fillText(score >= 100 ? 'YOU WIN!' : 'GAME OVER!', canvas.width / 2 - 150, canvas.height / 2);
+                document.getElementById('restartButton').style.display = 'block';
+                enemy = null;
+                bullets.splice(0, bullets.length);
+                enemyBullets.splice(0, enemyBullets.length);
+            }
+        }
+        // 적 공격 함수
+        function enemyFire() {
+            if (enemy) {
+                // 45도 방향
+                enemyBullets.push({x: enemy.x + 25, y: enemy.y + 25, dx: -1, dy: 1, angle: 0});
+                // 90도 방향
+                enemyBullets.push({x: enemy.x + 25, y: enemy.y + 25, dx: 0, dy: 1, angle: 0});
+                // 135도 방향
+                enemyBullets.push({x: enemy.x + 25, y: enemy.y + 25, dx: 1, dy: 1, angle: 0});
+            }
+        }
+
+        // 플레이어와 적 그리기 함수
+        function draw() {
+            // 플레이어 그리기
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(playerX, playerY, 50, 50);
+
+            // 적 그리기
+            if (enemy) {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(enemy.x, enemy.y, 50, 50);
+            }
+
+            // 적의 총알 그리기
+            ctx.fillStyle = 'red';
+            enemyBullets.forEach(function(bullet) {
+                ctx.save(); // 현재 변환 상태 저장
+                ctx.translate(bullet.x, bullet.y); // 좌표 원점 이동
+                ctx.rotate(bullet.angle); // 회전
+                ctx.fillRect(-5, -5, 10, 10); // 작은 정사각형 총알
+                ctx.restore(); // 이전 변환 상태 복원
+            });
+
+            // 총알 그리기
+            ctx.fillStyle = 'green';
+            bullets.forEach(function(bullet) {
+                ctx.fillRect(bullet.x, bullet.y, 5, 10);
+            });
+        }
+
+        // 총알과 적의 충돌 감지 함수
+        function checkCollisions() {
+            // 플레이어의 총알이 적에게 닿았을 때
+            bullets.forEach((bullet, bulletIndex) => {
+                if (bullet.x < enemy.x + 50 && bullet.x + 5 > enemy.x && bullet.y < enemy.y + 50 && bullet.y + 10 > enemy.y) {
+                    bullets.splice(bulletIndex, 1);
+                    enemyHitCount++;
+                    if (enemyHitCount >= 10) {
+                        score += 10;
+                        createEnemy();
+                        enemyHitCount = 0;
+                    }
+                }
+            });
+            // 적의 총알이 플레이어에게 닿았을 때,
+            enemyBullets.forEach(function(bullet, bulletIndex) {
+                if (bullet.x < playerX + 50 && bullet.x + 5 > playerX && bullet.y < playerY + 50 && bullet.y + 5 > playerY) {
+                    enemyBullets.splice(bulletIndex, 1); // 총알 제거
+                    playerHP -= 1; // 플레이어 HP 감소
+                }
+            });
+        }
+        //게임 재시작 함수
+        function restartGame() {
+            playerX = canvas.width / 2;
+            playerY = canvas.height - 50;
+            score = 0;
+            playerHP = 10;
+            gameEnded = false;
+            createEnemy();
+            document.getElementById('restartButton').style.display = 'none';
+        }
+
+        // 게임 업데이트 함수
+        function update() {
+            if (gameEnded) return;
+            let dx = 0, dy = 0;
+            if (keys['ArrowLeft']) dx -= 1;
+            if (keys['ArrowRight']) dx += 1;
+            if (keys['ArrowUp']) dy -= 1;
+            if (keys['ArrowDown']) dy += 1;
+            if (dx !== 0 && dy !== 0) {
+                const length = Math.sqrt(dx * dx + dy * dy);
+                dx /= length;
+                dy /= length;
+            }
+            playerX += dx * playerSpeed;
+            playerY += dy * playerSpeed;
+            playerX = Math.max(0, Math.min(playerX, canvas.width - 50));
+            playerY = Math.max(0, Math.min(playerY, canvas.height - 50));
+            if (keys[' '] && Date.now() - lastBulletTime > 100) {
+                bullets.push({ x: playerX + 22.5, y: playerY });
+                lastBulletTime = Date.now();
+            }
+            bullets.forEach(bullet => { bullet.y -= 5; });
+            enemyBullets.forEach(bullet => {
+                bullet.x += bullet.dx * 5;
+                bullet.y += bullet.dy * 5;
+                bullet.angle += Math.PI / 100;
+            });
+            bullets.forEach((bullet, index) => {
+                if (bullet.y < 0) bullets.splice(index, 1);
+            });
+            enemyBullets.forEach((bullet, index) => {
+                if (bullet.y > canvas.height || bullet.x > canvas.width) enemyBullets.splice(index, 1);
+            });
+            draw();
+            drawHUD();
+            checkGameCondition();
+            checkCollisions();
+        }
+        // 키를 누를 때 발생하는 이벤트 리스너
+        window.addEventListener('keydown', function(event) {
+            keys[event.key] = true;
+        });
+        // 키를 뗄 때 발생하는 이벤트 리스너
+        window.addEventListener('keyup', function(event) {
+            keys[event.key] = false;
+        });
+        // 게임 초기화
+        init();
+        // 게임 루프 시작
+        setInterval(update, 1000 / 60); // 60fps
+        document.getElementById('restartButton').addEventListener('click', function() {
+            restartGame();
+        });
+    </script>
+</body>
+</html>
