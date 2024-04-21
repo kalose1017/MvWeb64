@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canvas에 점프와 중력 적용하기</title>
+<style>
+    #GameBox {
+        position: relative;
+        width: 800px;
+        height: 800px;
+    }
+    #myCanvas {
+        border: 1px solid black;
+        position: relative;
+        top: 0;
+        left: 0;
+    }
+    #restartButton {
+        display: none;
+        position: absolute;
+        top: 60%;
+        left: 50%;
+        transform: translate(-50%, 0);
+        font-size: 16px;
+        padding: 10px 20px;
+        background-color: green;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+<div id="GameBox">
+    <canvas id="myCanvas" width="800" height="800" style="border: 1px solid black;"></canvas>
+    <button id="restartButton">다시하기</button>
+</div>
+<script>
+// canvas 요소 가져오기
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+// 초기 파란색 사각형 위치 및 상태
+var blueRect = {
+    x: 100,
+    y: 670,
+    width: 30,
+    height: 30,
+    isJumping: false,
+    jumpHeight: 18,
+    gravity: 1,
+    jumpForce: 0,
+    canJump: true // 스페이스바 입력 허용 여부
+};
+
+// 초록색 사각형 위치 및 상태
+var greenRect = {
+    x: canvas.width, // 오른쪽 벽에서 생성
+    y: 640,
+    width: 30,
+    height: 60,
+    speed: 15 // 초록색 사각형의 이동 속도
+};
+
+var score = 0;
+var initialGreenSpeed = greenRect.speed; // 초록색 사각형의 초기 속도 저장
+// 그리기 함수
+function draw() {
+    // 캔버스 초기화
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 검은색 선 그리기
+    ctx.strokeStyle = "black";
+    ctx.beginPath();
+    ctx.moveTo(0, 700);
+    ctx.lineTo(canvas.width, 700);
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // 파란색 사각형 그리기
+    ctx.fillStyle = "blue";
+    ctx.fillRect(blueRect.x, blueRect.y, blueRect.width, blueRect.height);
+
+    // 초록색 사각형 그리기
+    ctx.fillStyle = "green";
+    ctx.fillRect(greenRect.x, greenRect.y, greenRect.width, greenRect.height);
+
+    // 충돌 시 "GAME OVER!" 텍스트 출력
+    if (
+        blueRect.x < greenRect.x + greenRect.width &&
+        blueRect.x + blueRect.width > greenRect.x &&
+        blueRect.y < greenRect.y + greenRect.height &&
+        blueRect.y + blueRect.height > greenRect.y
+    ) {
+        ctx.font = "bold 36px Arial";
+        ctx.fillStyle = "red";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER!", canvas.width / 2, canvas.height / 2);
+        document.getElementById('restartButton').style.display = 'block';
+        
+    }
+
+    // 스코어 텍스트 출력
+    ctx.font = "bold 24px Arial";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "right";
+    ctx.fillText("Score: " + score, canvas.width - 10, 30);
+}
+
+// 점프 함수
+function jump() {
+    if (blueRect.canJump && !blueRect.isJumping) {
+        blueRect.isJumping = true;
+        blueRect.jumpForce = blueRect.jumpHeight;
+        console.log("파란색 사각형의 점프력 : ", blueRect.jumpForce);
+    }
+}
+
+// 초록색 사각형 이동 함수
+function moveGreenRect() {
+    greenRect.x -= greenRect.speed; // 초록색 사각형을 왼쪽으로 이동
+    if (greenRect.x + greenRect.width <= 0) {
+        // 초록색 사각형이 왼쪽 벽에 충돌하면 초기 위치로 되돌림
+        greenRect.x = canvas.width;
+        console.log("초록색 사각형의 이동 속도:", greenRect.speed);
+        score++;
+    }
+}
+
+// 충돌 감지 함수
+function detectCollision() {
+    // 파란색 사각형과 초록색 사각형의 충돌 여부 확인
+    if (
+        blueRect.x < greenRect.x + greenRect.width &&
+        blueRect.x + blueRect.width > greenRect.x &&
+        blueRect.y < greenRect.y + greenRect.height &&
+        blueRect.y + blueRect.height > greenRect.y
+    ) {
+        // 충돌 시 파란색 사각형의 점프 동작과 초록색 사각형의 이동 멈춤
+        blueRect.isJumping = false;
+        greenRect.speed = 0;
+        blueRect.canJump = false; // 스페이스바 입력 비허용
+    } else {
+        blueRect.canJump = true; // 충돌하지 않으면 스페이스바 입력 허용
+    }
+}
+
+// 게임 루프
+var animationID; // 애니메이션 프레임 ID를 저장하기 위한 변수
+var lastFrameTime = performance.now(); // 이전 프레임의 시간
+
+function gameLoop() {
+    var currentTime = performance.now(); // 현재 시간
+    var deltaTime = currentTime - lastFrameTime; // 경과 시간
+
+    if (deltaTime > 1000 / 300) { // 초당 360프레임을 목표로 함
+        lastFrameTime = currentTime; // 현재 시간으로 이전 프레임의 시간 업데이트
+
+        // 중력 적용
+        if (blueRect.isJumping) {
+            blueRect.y -= blueRect.jumpForce;
+            blueRect.jumpForce -= blueRect.gravity;
+            if (blueRect.y >= 670) {
+                blueRect.y = 670;
+                blueRect.isJumping = false;
+            }
+        }
+
+        moveGreenRect(); // 초록색 사각형 이동
+        draw(); // 그리기 함수 호출
+        detectCollision(); // 충돌 감지
+    }
+
+    animationID = requestAnimationFrame(gameLoop); // 다음 프레임 요청
+}
+
+// 키 이벤트 리스너 등록
+document.addEventListener("keydown", function(event) {
+    if (event.key === " ") { // 스페이스바를 눌렀을 때
+        jump();
+    }
+});
+
+document.getElementById('restartButton').addEventListener('click', function() {
+    restartGame();
+}); // 다시하기 버튼 클릭 시 게임 재시작
+
+// 다시하기 함수
+function restartGame() {
+    score = 0; // 스코어 초기화
+    blueRect.y = 670; // 파란색 사각형 위치 초기화
+    greenRect.x = canvas.width; // 초록색 사각형 위치 초기화 (화면 오른쪽 끝에서 시작)
+    greenRect.speed = initialGreenSpeed; // 초록색 사각형 이동 속도 초기값으로 설정
+    document.getElementById('restartButton').style.display = 'none'; // 다시하기 버튼 숨김
+    reGame = true;
+    gameLoop(); // 게임 루프 재시작    
+}
+
+gameLoop();
+</script>
+</body>
+</html>

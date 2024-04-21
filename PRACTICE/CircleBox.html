@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canvas Collision</title>
+<style>
+    canvas {
+        border: 1px solid black;
+    }
+</style>
+</head>
+<body>
+<canvas id="myCanvas" width="500" height="300"></canvas>
+
+<script>
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 사각형의 초기 위치와 속도
+    let rect = {
+        x: 50,
+        y: 50,
+        width: 50,
+        height: 50,
+        speedX: 2,
+        speedY: 1
+    };
+
+    // 원의 초기 위치와 속도
+    let circle = {
+        x: 200,
+        y: 150,
+        radius: 25,
+        speedX: -1,
+        speedY: -2
+    };
+
+    function drawRect() {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    function drawCircle() {
+        ctx.beginPath();
+        ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function update() {
+        // 사각형 이동
+        rect.x += rect.speedX;
+        rect.y += rect.speedY;
+
+        // 원 이동
+        circle.x += circle.speedX;
+        circle.y += circle.speedY;
+
+        // 사각형과 벽 충돌 감지
+        if (rect.x < 0 || rect.x + rect.width > canvas.width) {
+            rect.speedX *= -1;
+        }
+        if (rect.y < 0 || rect.y + rect.height > canvas.height) {
+            rect.speedY *= -1;
+        }
+
+        // 원과 벽 충돌 감지
+        if (circle.x - circle.radius < 0 || circle.x + circle.radius > canvas.width) {
+            circle.speedX *= -1;
+        }
+        if (circle.y - circle.radius < 0 || circle.y + circle.radius > canvas.height) {
+            circle.speedY *= -1;
+        }
+
+        // 원과 사각형 충돌 감지
+        if (circle.x + circle.radius > rect.x &&
+            circle.x - circle.radius < rect.x + rect.width &&
+            circle.y + circle.radius > rect.y &&
+            circle.y - circle.radius < rect.y + rect.height) {
+            // 충돌 시 각 도형의 이동 방향을 반전시킴
+            const tempX = rect.speedX;
+            const tempY = rect.speedY;
+            rect.speedX = circle.speedX;
+            rect.speedY = circle.speedY;
+            circle.speedX = tempX;
+            circle.speedY = tempY;
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawRect();
+        drawCircle();
+        update();
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+</script>
+</body>
+</html>
