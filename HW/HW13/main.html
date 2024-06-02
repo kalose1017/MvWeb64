@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>202127064 이지호</title>
+<style>
+    canvas {
+        border: 1px solid black;
+    }
+</style>
+</head>
+<body>
+<canvas id="myCanvas" width="800" height="800"></canvas>
+<script>
+    var canvas = document.getElementById('myCanvas'); 
+    var ctx = canvas.getContext('2d'); 
+    var rotation = 0;
+    var rotationSpeed = 0.01;
+
+    // 애니메이션 함수
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawTriangle(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 4, rotation, "yellow");
+        requestAnimationFrame(animate); 
+        rotation += rotationSpeed;
+    }
+
+    canvas.addEventListener('click', function(event) {
+        var clickX = event.clientX - canvas.offsetLeft; // 클릭한 X 좌표를 계산(왼쪽부터 얼만큼 떨어져있는가?)
+        var clickY = event.clientY - canvas.offsetTop; // 클릭한 Y 좌표를 계산(상단에서 얼만큼 떨어져있는가?)
+        var x = canvas.width / 2; // 삼각형 중심의 X 좌표
+        var y = canvas.height / 2; // 삼각형 중심의 Y 좌표
+        var size = Math.min(canvas.width, canvas.height) / 4; // 삼각형의 한 변 길이
+        var vertices = getRotatedVertices(x, y, size, rotation); // 회전된 삼각형의 꼭지점 좌표를 계산
+        var isInside = isPointInTriangle(clickX, clickY, vertices[0].x, vertices[0].y, vertices[1].x, vertices[1].y, vertices[2].x, vertices[2].y); // 클릭한 점이 삼각형 내부에 있는지 확인
+        
+        if (isInside) {
+            ctx.fillStyle = "red";
+            console.log("Clicked point (" + clickX + ", " + clickY + ") 삼각형 안쪽!!!");
+        } else {
+            ctx.fillStyle = "yellow";
+            console.log("Clicked point (" + clickX + ", " + clickY + ") 삼각형 바깥...");
+        }
+    });
+
+    function getRotatedVertices(cx, cy, size, angle) {
+        var vertices = []; // 꼭지점 좌표를 저장할 배열
+        var angles = [0, 2 * Math.PI / 3, 4 * Math.PI / 3]; // 삼각형의 각 꼭지점이 중심에서 이루는 각도(120도씩 돌면서 꼭지점 설계)
+
+        //for문으로 각도 회전
+        for (var i = 0; i < 3; i++) {
+            var x = cx + size * Math.cos(angle + angles[i]);
+            var y = cy + size * Math.sin(angle + angles[i]);
+            vertices.push({x: x, y: y});
+        }
+
+        return vertices; 
+    }
+
+    // 삼각형을 그리는 함수
+    function drawTriangle(x, y, size, rotation, color) {
+        var vertices = getRotatedVertices(x, y, size, rotation);
+        ctx.save(); 
+        ctx.beginPath(); 
+        ctx.moveTo(vertices[0].x, vertices[0].y); 
+        ctx.lineTo(vertices[1].x, vertices[1].y); 
+        ctx.lineTo(vertices[2].x, vertices[2].y); 
+        ctx.closePath(); 
+        ctx.fill(); 
+        ctx.stroke(); 
+        ctx.restore(); 
+    }
+
+    animate();
+
+    function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
+        var d1, d2, d3;
+        var has_neg, has_pos;
+
+        // 점이 삼각형의 각 변에 대해 어느 쪽에 있는지 계산합니다.
+        d1 = sign(px, py, x1, y1, x2, y2);
+        d2 = sign(px, py, x2, y2, x3, y3);
+        d3 = sign(px, py, x3, y3, x1, y1);
+
+        // 점이 모든 변의 동일한 쪽에 있는지 확인합니다.
+        has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+        has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+        return !(has_neg && has_pos); // 점이 삼각형 내부에 있는 경우 true를 반환합니다.
+    }
+
+    // 벡터의 외적을 계산하여 점이 직선의 어느 쪽에 있는지 확인하는 함수
+    function sign(px, py, x1, y1, x2, y2) {
+        return (px - x2) * (y1 - y2) - (x1 - x2) * (py - y2);
+    }
+</script>
+</body>
+</html>
