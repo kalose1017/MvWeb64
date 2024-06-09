@@ -1,99 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>202127064 이지호</title>
-<style>
-    canvas {
-        border: 1px solid black;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LJH, KHS공동개발프로젝트</title>
 </head>
+<!-- 양심적으로 희승이와 함께 공동개발 하였습니다... -->
 <body>
-<canvas id="myCanvas" width="800" height="800"></canvas>
+    <canvas id="canvas" width="500" height="500"></canvas> 
+</body>
 <script>
-    var canvas = document.getElementById('myCanvas'); 
-    var ctx = canvas.getContext('2d'); 
-    var rotation = 0;
-    var rotationSpeed = 0.01;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
 
-    // 애니메이션 함수
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawTriangle(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 4, rotation, "yellow");
-        requestAnimationFrame(animate); 
-        rotation += rotationSpeed;
+    let angle = 0; // 회전 각도
+    let isInside = false; // 삼각형 내부 클릭 여부
+    let randomColor = getRandomColor(); // 랜덤한 색상 미리 생성
+
+    // 삼각형의 원래 좌표
+    const triangle = [
+        { x: -100, y: 0 },
+        { x: 0, y: -100 },
+        { x: 100, y: 0 }
+    ];
+
+    // 애니메이션 루프 설정
+    function draw() {
+        ctx.clearRect(0, 0, width, height); // 캔버스 전체 지우기
+
+        // 좌표계의 중앙을 (0,0)으로 설정
+        ctx.save();
+        ctx.translate(centerX, centerY);
+
+        // 삼각형 회전
+        ctx.rotate(angle * Math.PI / 180);
+
+        // 클릭된 좌표가 삼각형 내부에 있을 때 랜덤한 색상으로 삼각형 채우기
+        if (isInside) {
+            ctx.fillStyle = randomColor; // 미리 생성된 랜덤한 색상 사용
+        } else {
+            ctx.fillStyle = 'lightgray'; // 일반 색상
+        }
+
+        // 삼각형 그리기
+        ctx.beginPath();
+        ctx.moveTo(triangle[0].x, triangle[0].y);
+        ctx.lineTo(triangle[1].x, triangle[1].y);
+        ctx.lineTo(triangle[2].x, triangle[2].y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore(); // 상태 복원
+
+        angle += 1; // 각도 증가 (회전 속도 조절 가능)
+
+        requestAnimationFrame(draw); // 다음 프레임 요청
     }
 
-    canvas.addEventListener('click', function(event) {
-        var clickX = event.clientX - canvas.offsetLeft; // 클릭한 X 좌표를 계산(왼쪽부터 얼만큼 떨어져있는가?)
-        var clickY = event.clientY - canvas.offsetTop; // 클릭한 Y 좌표를 계산(상단에서 얼만큼 떨어져있는가?)
-        var x = canvas.width / 2; // 삼각형 중심의 X 좌표
-        var y = canvas.height / 2; // 삼각형 중심의 Y 좌표
-        var size = Math.min(canvas.width, canvas.height) / 4; // 삼각형의 한 변 길이
-        var vertices = getRotatedVertices(x, y, size, rotation); // 회전된 삼각형의 꼭지점 좌표를 계산
-        var isInside = isPointInTriangle(clickX, clickY, vertices[0].x, vertices[0].y, vertices[1].x, vertices[1].y, vertices[2].x, vertices[2].y); // 클릭한 점이 삼각형 내부에 있는지 확인
-        
+    // 애니메이션 시작
+    draw();
+
+    // 마우스 클릭 이벤트 핸들러
+    canvas.addEventListener('click', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left - centerX;
+        const mouseY = event.clientY - rect.top - centerY;
+
+        // 클릭된 좌표를 삼각형의 회전에 맞춰 변환
+        const rotatedPoint = rotatePoint(mouseX, mouseY, -angle);
+        const x = rotatedPoint.x;
+        const y = rotatedPoint.y;
+
+        // 클릭된 좌표가 삼각형 내부에 있는지 확인
+        isInside = isPointInRotatedTriangle(x, y, angle);
+
+        // 클릭할 때마다 새로운 랜덤한 색상 생성
+        randomColor = getRandomColor();
+
+        // 클릭된 좌표가 삼각형 내부에 있으면 로그 출력
         if (isInside) {
-            ctx.fillStyle = "red";
-            console.log("Clicked point (" + clickX + ", " + clickY + ") 삼각형 안쪽!!!");
-        } else {
-            ctx.fillStyle = "yellow";
-            console.log("Clicked point (" + clickX + ", " + clickY + ") 삼각형 바깥...");
+            console.log(`inside the triangle.`);
+        }
+        else{
+            console.log(`outside the triangle.`);
         }
     });
 
-    function getRotatedVertices(cx, cy, size, angle) {
-        var vertices = []; // 꼭지점 좌표를 저장할 배열
-        var angles = [0, 2 * Math.PI / 3, 4 * Math.PI / 3]; // 삼각형의 각 꼭지점이 중심에서 이루는 각도(120도씩 돌면서 꼭지점 설계)
-
-        //for문으로 각도 회전
-        for (var i = 0; i < 3; i++) {
-            var x = cx + size * Math.cos(angle + angles[i]);
-            var y = cy + size * Math.sin(angle + angles[i]);
-            vertices.push({x: x, y: y});
-        }
-
-        return vertices; 
+    // 점을 회전시키는 함수
+    function rotatePoint(x, y, angle) {
+        const radians = angle * Math.PI / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        const nx = cos * x - sin * y;
+        const ny = sin * x + cos * y;
+        return { x: nx, y: ny };
     }
 
-    // 삼각형을 그리는 함수
-    function drawTriangle(x, y, size, rotation, color) {
-        var vertices = getRotatedVertices(x, y, size, rotation);
-        ctx.save(); 
-        ctx.beginPath(); 
-        ctx.moveTo(vertices[0].x, vertices[0].y); 
-        ctx.lineTo(vertices[1].x, vertices[1].y); 
-        ctx.lineTo(vertices[2].x, vertices[2].y); 
-        ctx.closePath(); 
-        ctx.fill(); 
-        ctx.stroke(); 
-        ctx.restore(); 
+    // 기울기-절편 방정식 구하는 함수
+    function getLineEquation(p1, p2) {
+        const m = (p2.y - p1.y) / (p2.x - p1.x);
+        const b = p1.y - m * p1.x;
+        return { m, b };
     }
 
-    animate();
-
-    function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
-        var d1, d2, d3;
-        var has_neg, has_pos;
-
-        // 점이 삼각형의 각 변에 대해 어느 쪽에 있는지 계산합니다.
-        d1 = sign(px, py, x1, y1, x2, y2);
-        d2 = sign(px, py, x2, y2, x3, y3);
-        d3 = sign(px, py, x3, y3, x1, y1);
-
-        // 점이 모든 변의 동일한 쪽에 있는지 확인합니다.
-        has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-        has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-
-        return !(has_neg && has_pos); // 점이 삼각형 내부에 있는 경우 true를 반환합니다.
+    // 점이 직선 위에 있는지 확인하는 함수
+    function isPointAboveLine(x, y, line) {
+        return y >= line.m * x + line.b;
     }
 
-    // 벡터의 외적을 계산하여 점이 직선의 어느 쪽에 있는지 확인하는 함수
-    function sign(px, py, x1, y1, x2, y2) {
-        return (px - x2) * (y1 - y2) - (x1 - x2) * (py - y2);
+    // 점이 직선 아래에 있는지 확인하는 함수
+    function isPointBelowLine(x, y, line) {
+        return y <= line.m * x + line.b;
+    }
+
+    // 점이 회전된 삼각형 내부에 있는지 확인
+    function isPointInRotatedTriangle(x, y, angle) {
+        // 삼각형의 원래 좌표
+        const p1 = triangle[0];
+        const p2 = triangle[1];
+        const p3 = triangle[2];
+
+        // 삼각형의 각 변의 기울기-절편 방정식 계산
+        const line1 = getLineEquation(p1, p2);
+        const line2 = getLineEquation(p2, p3);
+        const line3 = getLineEquation(p3, p1);
+
+        // 점이 삼각형 내부에 있는지 확인
+        return isPointAboveLine(x, y, line1) && //클릭 지점이 직선1보다 위에 있을 때,
+               isPointAboveLine(x, y, line2) && //클릭 지점이 직선2보다 위에 있을 때,
+               isPointBelowLine(x, y, line3); //클릭 지점이 직선3보다 아래에 있을 때, 클릭 지점이 삼각형 안에 있다고 판단.
+    }
+
+
+    // 랜덤한 RGB 색상을 반환하는 함수
+    function getRandomColor() {
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        return `rgb(${r}, ${g}, ${b})`;
     }
 </script>
-</body>
 </html>
